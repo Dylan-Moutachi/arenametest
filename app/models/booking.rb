@@ -3,14 +3,17 @@ require "csv"
 class Booking < ApplicationRecord
   # regarding sample csv, age and gender are not always provided
   # so I suppose these are not mandatory informations.
-  validates :first_name, :last_name, :booking_number, :show, :date, :price, presence: true
+  validates :first_name, :last_name, :booking_number, :show, :date, :price, :ticket_number, presence: true
+  validates :ticket_number, uniqueness: true
 
   def self.import(file)
-    CSV.foreach(file.path, headers: true) do |row|
-      # I would like to see if some lines are not imported
-      # so I use begin and rescue to scan each one of them
+    successes = 0
+    errors = []
+
+    CSV.foreach(file.path, headers: true, col_sep: ";", encoding: "bom|utf-8") do |row|
       begin
         Booking.create!(
+          ticket_number: row["ticket_number"],
           booking_number: row["booking_number"],
           show: row["show"],
           date: row["date"],
@@ -20,9 +23,13 @@ class Booking < ApplicationRecord
           age: row["age"],
           gender: row["gender"]
         )
+        successes += 1
       rescue ActiveRecord::RecordInvalid => e
-        Rails.logger.error "Ignored line: #{row.to_h} – error : #{e.message}"
+        Rails.logger.error "Ignored line: #{row.to_h} – error: #{e.message}"
+        errors << { row: row.to_h, messages: e.record.errors.full_messages }
       end
     end
+
+    { successes:, errors: }
   end
 end
