@@ -21,7 +21,7 @@ class Booking < ApplicationRecord
           gender: row["gender"]
         )
       rescue ActiveRecord::RecordInvalid => e
-        Rails.logger.error "Ligne ignorée : #{row.to_h} – erreur : #{e.message}"
+        Rails.logger.error "Ignored line: #{row.to_h} – error : #{e.message}"
       end
     end
   end
