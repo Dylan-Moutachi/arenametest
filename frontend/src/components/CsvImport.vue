@@ -48,25 +48,50 @@
 </script>
 
 <template>
-  <div>
-    <h1>Import CSV file</h1>
+  <div class="max-w-4xl mx-auto p-6">
+    <h1 class="text-3xl font-bold mb-6">Import CSV file</h1>
 
-    <form @submit.prevent="handleSubmit">
-      <input
-        ref="fileInput"
-        type="file"
-        accept=".csv"
-        @change="handleFileChange"
-      />
+    <form @submit.prevent="handleSubmit" class="flex flex-col justify-center gap-4">
+      <div class="flex items-center">
+        <input
+          type="file"
+          id="fileInput"
+          accept=".csv"
+          class="hidden"
+          @change="handleFileChange"
+        />
+
+        <label
+          for="fileInput"
+          class="cursor-pointer bg-black text-white px-4 py-2 rounded-l hover:bg-gray-900 transition"
+        >
+          Select a file
+        </label>
+
+        <div
+          class="inline-block border border-gray-300 rounded-r px-3 py-1 min-w-[250px] truncate align-middle"
+          :title="file ? file.name : ''"
+        >
+          {{ file ? file.name : 'Aucun fichier sélectionné' }}
+        </div>
+      </div>
 
       <button
         type="submit"
         :disabled="!file"
+        class="bg-black text-white px-4 py-2 rounded hover:bg-gray-900 disabled:opacity-50 transition"
       >
         Import
       </button>
 
-      <p v-if="message">{{ message }}</p>
+      <p v-if="message" class="text-sm text-white">{{ message }}</p>
     </form>
+
+    <router-link
+      to="/stats"
+      class="inline-block mt-6 text-white bg-black hover:bg-gray-900 px-4 py-2 rounded transition"
+    >
+      Check stats
+    </router-link>
   </div>
 </template>
