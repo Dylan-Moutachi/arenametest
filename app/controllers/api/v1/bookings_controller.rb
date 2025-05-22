@@ -5,6 +5,9 @@ module Api
       # are successfully imported and other lines failed to be imported
       MULTI_STATUS = 207
 
+      # In order to protect DB from being locked, I set a maximum file size
+      MAX_FILE_SIZE_MB = 5
+
       def index
         bookings = Booking.all
 
@@ -47,6 +50,11 @@ module Api
       def import
         file = params[:file]
         return render json: { error: "No file sent" }, status: :bad_request unless file
+
+        # Size limit
+        if file.size > MAX_FILE_SIZE_MB.megabytes
+          return render json: { error: "File is too large. Maximum allowed size is #{MAX_FILE_SIZE_MB} MB." }, status: :bad_request
+        end
 
         begin
           result = Booking.import(file)
