@@ -2,20 +2,18 @@
   import { ref } from "vue"
 
   const file = ref(null)
-  const message = ref("") // message is different if file import succeeds or fails
-  const MAX_FILE_SIZE_MB = 5
+  const MAX_FILE_SIZE_MB = 100
 
-  // also check the file size here and display message if too big
+  // check the file size here and display message if too big
   const handleFileChange = (event) => {
     const selectedFile = event.target.files[0]
 
-    // file.size is in bytes so to have megabytes we multiply the value set in backend in megabytes
+    // file.size is in bytes so to have megabytes we multiply the value in megabytes
     if (selectedFile && selectedFile.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
-      message.value = `File is too large. Maximum allowed size is ${MAX_FILE_SIZE_MB} MB.`
+      alert(`File is too large. Maximum allowed size is ${MAX_FILE_SIZE_MB} MB.`)
       file.value = null
     } else {
       file.value = selectedFile
-      message.value = ""
     }
   }
 
@@ -33,28 +31,21 @@
         body: formData
       })
 
-      const data = await response.json()
-
-      if (response.status === 400) {
-        message.value = data.error || "Invalid file."
-        file.value = null
-      } else if (response.status === 207) {
-        message.value = data.message || `Import completed with some errors. Imported: ${data.imported} lines`
-        console.error("Import errors:", data.errors)
-        file.value = null
-      } else if (response.ok) {
-        message.value = data.message
-        file.value = null
-      } else if (response.status === 422) {
-        message.value = data.message || "No lines were imported."
-        console.error("Import errors:", data.details)
-        file.value = null
+      // Inform the user that the import is running in the background
+      if (response.status === 202) {
+        alert("Import started. The file is being processed in background.")
+      } else if (response.status === 400) {
+        const data = await response.json()
+        alert(data.error || "Invalid file.")
       } else {
-        console.error("Import failed:", data.error || "Unknown error")
+        alert("An unexpected error occurred.")
       }
+
+      file.value = null
     } catch (err) {
       console.error("Error caught:", err)
-      message.value = "An unexpected error occurred during import."
+      alert("An unexpected error occurred during import.")
+      file.value = null
     }
   }
 </script>
@@ -75,7 +66,7 @@
 
         <label
           for="fileInput"
-          class="cursor-pointer bg-black text-white px-4 py-2 rounded-l hover:bg-gray-900 transition"
+          class="cursor-pointer bg-black border border-white text-white px-4 py-1 rounded-l hover:bg-white hover:text-black transition"
         >
           Select a file
         </label>
@@ -84,30 +75,22 @@
           class="inline-block border border-gray-300 rounded-r px-3 py-1 min-w-[250px] truncate align-middle"
           :title="file ? file.name : ''"
         >
-          {{ file ? file.name : 'Aucun fichier sélectionné' }}
+          {{ file ? file.name : 'No file selected' }}
         </div>
       </div>
 
       <button
         type="submit"
         :disabled="!file"
-        class="bg-black text-white px-4 py-2 rounded hover:bg-gray-900 disabled:opacity-50 transition"
+        class="bg-black text-white px-4 py-2 rounded hover:bg-white hover:text-black disabled:opacity-50 transition"
       >
         Import
       </button>
-
-      <p
-        v-if="message"
-        class="text-sm"
-        :class="message.toLowerCase().includes('error') || message.toLowerCase().includes('invalid') ? 'text-red-500' : 'text-white'"
-      >
-        {{ message }}
-      </p>
     </form>
 
     <router-link
       to="/stats"
-      class="inline-block mt-6 text-white bg-black hover:bg-gray-900 px-4 py-2 rounded transition"
+      class="inline-block mt-6 text-white bg-black hover:bg-white hover:text-black px-4 py-2 rounded transition"
     >
       Check stats
     </router-link>
