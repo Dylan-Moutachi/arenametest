@@ -3,7 +3,13 @@ require "csv"
 class Booking < ApplicationRecord
   # regarding sample csv, age and gender are not always provided
   # so I suppose these are not mandatory informations.
-  validates :first_name, :last_name, :booking_number, :show, :date, :price, :ticket_number, presence: true
+  validates :ticket_number, :booking_number, :booking_date, :booking_hour,
+          :event_key, :event, :show_key, :show, :show_date, :show_hour,
+          :show_end_date, :show_end_hour, :price,
+          :product_type, :sales_channel,
+          :first_name, :last_name, :email,
+          :address, :postal_code, :country,
+          presence: true
   validates :ticket_number, uniqueness: true
 
   def self.import(file)
@@ -13,15 +19,29 @@ class Booking < ApplicationRecord
     CSV.foreach(file.path, headers: true, col_sep: ";", encoding: "bom|utf-8") do |row|
       begin
         Booking.create!(
-          ticket_number: row["ticket_number"],
-          booking_number: row["booking_number"],
-          show: row["show"],
-          date: row["date"],
-          price: row["price"],
-          last_name: row["last_name"],
-          first_name: row["first_name"],
-          age: row["age"],
-          gender: row["gender"]
+          ticket_number: row["Numero billet"],
+          booking_number: row["Reservation"],
+          booking_date: row["Date reservation"],
+          booking_hour: row["Heure reservation"],
+          event_key: row["Cle spectacle"],
+          event: row["Spectacle"],
+          show_key: row["Cle representation"],
+          show: row["Representation"],
+          show_date: row["Date representation"],
+          show_hour: row["Heure representation"],
+          show_end_date: row["Date fin representation"],
+          show_end_hour: row["Heure fin representation"],
+          price: row["Prix"],
+          product_type: row["Type de produit"],
+          sales_channel: row["Filiere de vente"],
+          first_name: row["Prenom"],
+          last_name: row["Nom"],
+          email: row["Email"],
+          address: row["Adresse"],
+          postal_code: row["Code postal"],
+          country: row["Pays"],
+          age: row["Age"],
+          gender: row["Sexe"]
         )
         successes += 1
       rescue ActiveRecord::RecordInvalid => e
