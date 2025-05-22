@@ -3,12 +3,20 @@
 
   const file = ref(null)
   const message = ref("") // message is different if file import succeeds or fails
+  const MAX_FILE_SIZE_MB = 5
 
-  // when a file is selected, we set the file
-  // and we reset the message if there was a previous import message
+  // also check the file size here and display message if too big
   const handleFileChange = (event) => {
-    file.value = event.target.files[0]
-    message.value = ""
+    const selectedFile = event.target.files[0]
+
+    // file.size is in bytes so to have megabytes we multiply the value set in backend in megabytes
+    if (selectedFile && selectedFile.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
+      message.value = `File is too large. Maximum allowed size is ${MAX_FILE_SIZE_MB} MB.`
+      file.value = null
+    } else {
+      file.value = selectedFile
+      message.value = ""
+    }
   }
 
   // send the form submit to the backend
@@ -27,7 +35,10 @@
 
       const data = await response.json()
 
-      if (response.status === 207) {
+      if (response.status === 400) {
+        message.value = data.error || "Invalid file."
+        file.value = null
+      } else if (response.status === 207) {
         message.value = data.message || `Import completed with some errors. Imported: ${data.imported} lines`
         console.error("Import errors:", data.errors)
         file.value = null
@@ -43,6 +54,7 @@
       }
     } catch (err) {
       console.error("Error caught:", err)
+      message.value = "An unexpected error occurred during import."
     }
   }
 </script>
@@ -84,7 +96,13 @@
         Import
       </button>
 
-      <p v-if="message" class="text-sm text-white">{{ message }}</p>
+      <p
+        v-if="message"
+        class="text-sm"
+        :class="message.toLowerCase().includes('error') || message.toLowerCase().includes('invalid') ? 'text-red-500' : 'text-white'"
+      >
+        {{ message }}
+      </p>
     </form>
 
     <router-link
