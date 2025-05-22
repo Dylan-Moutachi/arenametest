@@ -1,13 +1,11 @@
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted } from 'vue'
 
 const bookings = ref([])
 const loading = ref(true)
 const error = ref(null)
 
 const searchShow = ref('')
-const debouncedSearch = ref('')
-let debounceTimeout = null
 
 const stats = ref({
   average_age: null,
@@ -24,22 +22,13 @@ const pagination = ref({
   total_count: 0
 })
 
-watch(searchShow, (newVal) => {
-  clearTimeout(debounceTimeout)
-  debounceTimeout = setTimeout(() => {
-    debouncedSearch.value = newVal.trim()
-    pagination.value.current_page = 1
-    fetchBookings()
-  }, 300)
-})
-
 const fetchBookings = async () => {
   loading.value = true
   error.value = null
 
   try {
     const params = new URLSearchParams()
-    if (debouncedSearch.value) params.append('show', debouncedSearch.value)
+    if (searchShow.value) params.append('show', searchShow.value)
     params.append('page', pagination.value.current_page)
     params.append('per_page', pagination.value.per_page)
 
@@ -59,6 +48,11 @@ const fetchBookings = async () => {
 
 onMounted(fetchBookings)
 
+const handleSearch = () => {
+  pagination.value.current_page = 1
+  fetchBookings()
+}
+
 const goToPage = (page) => {
   if (page >= 1 && page <= pagination.value.total_pages) {
     pagination.value.current_page = page
@@ -71,17 +65,26 @@ const goToPage = (page) => {
   <div class="max-w-4xl mx-auto p-6">
     <h1 class="text-3xl font-bold mb-6">Statistics</h1>
 
-    <div class="flex items-center gap-4 mb-6">
+    <div class="flex items-center mb-6">
       <input
         type="text"
         v-model="searchShow"
+        @keyup.enter="handleSearch"
         placeholder="Search show"
-        class="border border-gray-300 rounded px-3 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        class="border border-gray-300 rounded-l px-3 py-1 focus:outline-none"
       />
+
+      <button
+        type="button"
+        @click="handleSearch"
+        class="bg-black hover:bg-white hover:text-black  border border-white text-white px-4 py-1 rounded-r transition"
+      >
+        Search
+      </button>
 
       <router-link
         to="/import"
-        class="ml-auto text-white bg-black hover:bg-gray-900 px-4 py-2 rounded transition"
+        class="ml-auto text-white bg-black hover:bg-white hover:text-black px-4 py-2 rounded transition"
       >
         Import CSV
       </router-link>
