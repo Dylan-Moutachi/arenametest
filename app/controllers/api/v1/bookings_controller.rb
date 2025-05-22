@@ -5,8 +5,9 @@ module Api
       # are successfully imported and other lines failed to be imported
       MULTI_STATUS = 207
 
-      # In order to protect DB from being locked, I set a maximum file size
-      MAX_FILE_SIZE_MB = 5
+      # In order to prevent swapping on sidekiq, we enforce a maximum file size
+      # With 100MB as max file size and 5 sidekiq threads, the server will take at most 500MB RAM
+      MAX_FILE_SIZE_MB = 100
 
       def index
         bookings = Booking.all
@@ -26,7 +27,7 @@ module Api
         average_price = bookings.average(:price)&.round(2)
         total_revenue = bookings.sum(:price).round(2)
         booking_count = bookings.count
-        unique_buyers_count = bookings.select(:first_name, :last_name).distinct.count
+        unique_buyers_count = bookings.select(:email).distinct.count
 
         render json: {
           bookings: ActiveModelSerializers::SerializableResource.new(paginated_bookings, each_serializer: BookingSerializer),
@@ -46,7 +47,6 @@ module Api
         }
       end
 
-
       def import
         file = params[:file]
         return render json: { error: "No file sent" }, status: :bad_request unless file
@@ -56,26 +56,19 @@ module Api
           return render json: { error: "File is too large. Maximum allowed size is #{MAX_FILE_SIZE_MB} MB." }, status: :bad_request
         end
 
-        begin
-          result = Booking.import(file)
+        # Save the uploaded file temporarily to disk before processing
+        # works in local, for production I would use AWS S3 as distributed storage
+        tmp_file_path = Rails.root.join("tmp", "upload_#{SecureRandom.uuid}.csv")
+        File.open(tmp_file_path, "wb") { it.write(file.read) }
 
-          if result[:successes] == 0
-            render json: {
-              error: "No lines were imported.",
-              details: result[:errors]
-            }, status: :unprocessable_entity
-          elsif result[:errors].any?
-            render json: {
-              message: "Import completed with some errors.",
-              imported: result[:successes],
-              errors: result[:errors]
-            }, status: MULTI_STATUS
-          else
-            render json: { message: "Successfully imported #{result[:successes]} bookings." }, status: :ok
-          end
-        rescue => e
-          render json: { error: e.message }, status: :unprocessable_entity
-        end
+        # Enqueue Sidekiq job for async import
+        # The job will read and process the CSV file in the background
+        ImportBookingsJob.perform_later(tmp_file_path.to_s)
+
+        # Respond immediately to the frontend
+        render json: { message: "File upload received. Import is being processed in background." }, status: :accepted
+      rescue => e
+        render json: { error: e.message }, status: :unprocessable_entity
       end
     end
   end

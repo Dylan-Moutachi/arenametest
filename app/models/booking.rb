@@ -15,7 +15,8 @@ class Booking < ApplicationRecord
   def self.import(file)
     successes = 0
     errors = []
-
+    # Ideally, we can variabilize CSV parsing arguments
+    # CSV.foreach(file.path, **options) ...
     CSV.foreach(file.path, headers: true, col_sep: ";", encoding: "bom|utf-8") do |row|
       begin
         Booking.create!(

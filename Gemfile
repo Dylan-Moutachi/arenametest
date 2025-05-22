@@ -48,3 +48,7 @@ end
 
 gem "active_model_serializers"
 gem "kaminari"
+gem "sidekiq"
+gem "redis"
+
+gem "csv", "~> 3.3"
