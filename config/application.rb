@@ -1,7 +1,7 @@
 require_relative "boot"
 
 require "rails"
-require 'sidekiq/api'
+require "sidekiq/api"
 # Pick the frameworks you want:
 require "active_model/railtie"
 require "active_job/railtie"
