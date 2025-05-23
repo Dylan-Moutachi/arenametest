@@ -46,10 +46,6 @@ jobs:
 
     env:
       RAILS_ENV: test
-      PGHOST: localhost
-      PGUSER: postgres
-      PGPASSWORD: password
-      PGPORT: 5432
 
     steps:
       - uses: actions/checkout@v4
@@ -64,6 +60,7 @@ jobs:
 
       - name: Setup database
         run: |
+          sleep 5
           bundle exec rails db:create
           bundle exec rails db:schema:load
 
