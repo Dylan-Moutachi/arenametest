@@ -89,7 +89,7 @@ describe Api::V1::BookingsController, type: :controller do
 
     context 'when valid file is sent' do
       it 'enqueues ImportBookingsJob and returns accepted' do
-        ImportBookingsJob.expects(:perform_later).once
+        ImportBookingsJob.expects(:perform_async).once
 
         post :import, params: { file: file }
 
