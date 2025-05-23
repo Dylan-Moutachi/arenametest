@@ -56,19 +56,24 @@ module Api
           return render json: { error: "File is too large. Maximum allowed size is #{MAX_FILE_SIZE_MB} MB." }, status: :bad_request
         end
 
-        # Save the uploaded file temporarily to disk before processing
-        # works in local, for production I would use AWS S3 as distributed storage
-        tmp_file_path = Rails.root.join("tmp", "upload_#{SecureRandom.uuid}.csv")
-        File.open(tmp_file_path, "wb") { it.write(file.read) }
+        begin
+          # raw content read
+          raw_content = file.read
 
-        # Enqueue Sidekiq job for async import
-        # The job will read and process the CSV file in the background
-        ImportBookingsJob.perform_later(tmp_file_path.to_s)
+          # utf8 converted content
+          utf8_content = CsvReaderService.convert_to_utf8(raw_content)
 
-        # Respond immediately to the frontend
-        render json: { message: "File upload received. Import is being processed in background." }, status: :accepted
-      rescue => e
-        render json: { error: e.message }, status: :unprocessable_entity
+          # write utf8 content in a temporary file
+          tmp_file_path = Rails.root.join("tmp", "upload_#{SecureRandom.uuid}.csv")
+          File.open(tmp_file_path, "wb") { |f| f.write(utf8_content) }
+
+          # Enqueue job with file path
+          ImportBookingsJob.perform_async(tmp_file_path.to_s)
+
+          render json: { message: "File upload received. Import is being processed in background." }, status: :accepted
+        rescue StandardError => e
+          render json: { error: e.message }, status: :unprocessable_entity
+        end
       end
     end
   end
