@@ -28,13 +28,16 @@ jobs:
           ruby-version: .ruby-version
           bundler-cache: true
 
-      - run: bin/rubocop -f github -D
+      - name: Lint Ruby code
+        run: bin/rubocop --format clang
 
   tests:
     runs-on: ubuntu-latest
     services:
       postgres:
         image: postgres:15
+        env:
+          POSTGRES_PASSWORD: password
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -43,6 +46,10 @@ jobs:
 
     env:
       RAILS_ENV: test
+      PGHOST: localhost
+      PGUSER: postgres
+      PGPASSWORD: password
+      PGPORT: 5432
 
     steps:
       - uses: actions/checkout@v4
