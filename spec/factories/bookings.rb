@@ -16,8 +16,8 @@ FactoryBot.define do
     show_end_hour { "22:00" }
 
     price { Faker::Commerce.price(range: 10.0..100.0) }
-    product_type { ["Billet standard", "Billet VIP"].sample }
-    sales_channel { ["Online", "Guichet", "Téléphone"].sample }
+    product_type { [ "Billet standard", "Billet VIP" ].sample }
+    sales_channel { [ "Online", "Guichet", "Téléphone" ].sample }
 
     first_name { Faker::Name.first_name }
     last_name { Faker::Name.last_name }
@@ -28,6 +28,6 @@ FactoryBot.define do
     country { Faker::Address.country }
 
     age { rand(18..80) }
-    gender { ["F", "M"].sample }
+    gender { [ "F", "M" ].sample }
   end
 end

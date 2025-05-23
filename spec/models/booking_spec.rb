@@ -18,7 +18,7 @@ RSpec.describe Booking, type: :model do
     end
 
     def create_temp_csv(content)
-      file = Tempfile.new(["bookings", ".csv"])
+      file = Tempfile.new([ "bookings", ".csv" ])
       file.write(content)
       file.rewind
       file
