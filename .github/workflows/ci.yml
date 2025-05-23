@@ -33,6 +33,8 @@ jobs:
 
   tests:
     runs-on: ubuntu-latest
+    container:
+      image: ruby:3.2
     services:
       postgres:
         image: postgres:15
@@ -42,27 +44,18 @@ jobs:
           --health-cmd pg_isready
           --health-interval 10s
           --health-timeout 5s
-          --health-retries 5
-
-    env:
-      RAILS_ENV: test
-
+          --health-retries 10
     steps:
       - uses: actions/checkout@v4
-
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: .ruby-version
           bundler-cache: true
-
-      - name: Install dependencies
+      - name: Installer les dépendances
         run: bundle install --jobs 4 --retry 3
-
-      - name: Setup database
+      - name: Configure database
         run: |
-          sleep 5
           bundle exec rails db:create
           bundle exec rails db:schema:load
-
-      - name: Run RSpec tests
+      - name: Exécuter les tests RSpec
         run: bundle exec rspec --format documentation
