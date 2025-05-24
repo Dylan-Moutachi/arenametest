@@ -63,7 +63,6 @@ module Api
 
           # utf8 converted content
           utf8_content = CsvReaderService.convert_to_utf8(raw_content)
-
           # write utf8 content in a temporary file
           tmp_file_path = Rails.root.join("tmp", "upload_#{SecureRandom.uuid}.csv")
           File.open(tmp_file_path, "wb") { |f| f.write(utf8_content) }
