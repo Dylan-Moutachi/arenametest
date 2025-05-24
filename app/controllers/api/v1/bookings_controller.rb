@@ -68,8 +68,11 @@ module Api
           tmp_file_path = Rails.root.join("tmp", "upload_#{SecureRandom.uuid}.csv")
           File.open(tmp_file_path, "wb") { |f| f.write(utf8_content) }
 
-          # Enqueue job with file path
-          ImportBookingsJob.perform_async(tmp_file_path.to_s)
+          # parse CSV mapping from frontend
+          csv_mapping = params[:csv_mapping].present? ? JSON.parse(params[:csv_mapping]) : {}
+
+          # Enqueue job with file path and mapping
+          ImportBookingsJob.perform_async(tmp_file_path.to_s, csv_mapping)
 
           render json: { message: "File upload received. Import is being processed in background." }, status: :accepted
         rescue StandardError => e
