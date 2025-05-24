@@ -1,4 +1,4 @@
-require "charlock_holmes"
+require "charlock_holmes" # gem that allows to read and convert csv encodings
 
 class CsvReaderService
   def self.convert_to_utf8(content)
