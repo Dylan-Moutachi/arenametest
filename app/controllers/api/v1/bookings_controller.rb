@@ -13,8 +13,9 @@ module Api
       def index
         bookings = Booking.all
 
-        if params[:show].present?
-          bookings = bookings.where("LOWER(show) LIKE ?", "%#{params[:show].downcase}%")
+        # event search function
+        if params[:event].present?
+          bookings = bookings.where("LOWER(event) LIKE ?", "%#{params[:event].downcase}%")
         end
 
         # Kaminari pagination

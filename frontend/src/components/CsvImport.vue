@@ -1,6 +1,7 @@
 <script setup>
 import { ref } from "vue"
 import Papa from "papaparse"
+import CsvMapping from "./CsvMapping.vue"
 
 const file = ref(null)
 const MAX_FILE_SIZE_MB = 100
@@ -39,6 +40,9 @@ const columnMapping = ref({})
 BOOKING_FIELDS.forEach(field => {
   columnMapping.value[field] = ""
 })
+
+// Reference to reset file input value for allowing same file import again
+const fileInputRef = ref(null)
 
 // check the file size here and display message if too big
 const handleFileChange = (event) => {
@@ -94,29 +98,29 @@ const handleSubmit = async () => {
     } else {
       alert("An unexpected error occurred.")
     }
-
-    file.value = null
-    csvHeaders.value = []
   } catch (err) {
     console.error("Error caught:", err)
     alert("An unexpected error occurred during import.")
+  } finally {
+    // reset everything after submission, so user can re-import same file if needed
     file.value = null
     csvHeaders.value = []
-  }
-}
+    // reset column mapping
+    columnMapping.value = {}
+    BOOKING_FIELDS.forEach(field => {
+      columnMapping.value[field] = ""
+    })
 
-// compute headers not yet selected
-const availableHeaders = (currentKey) => {
-  return csvHeaders.value.filter(header =>
-    !Object.entries(columnMapping.value).some(
-      ([key, selected]) => key !== currentKey && selected === header
-    )
-  )
+    // Reset file input to allow selecting the same file again
+    if (fileInputRef.value) {
+      fileInputRef.value.value = ""
+    }
+  }
 }
 </script>
 
 <template>
-  <div class="max-w-4xl mx-auto p-6">
+  <div class="mx-auto px-6 py-8 min-h-screen flex flex-col">
     <h1 class="text-3xl font-bold mb-8">Import CSV file</h1>
 
     <form @submit.prevent="handleSubmit" class="flex flex-col gap-6">
@@ -128,6 +132,7 @@ const availableHeaders = (currentKey) => {
           accept=".csv"
           class="hidden"
           @change="handleFileChange"
+          ref="fileInputRef"
         />
         <label
           for="fileInput"
@@ -138,7 +143,7 @@ const availableHeaders = (currentKey) => {
           Select a file
         </label>
         <div
-          class="flex-1 border border-gray-300 rounded-r px-4 py-2 truncate"
+          class="flex-1 border border-white rounded-r px-4 py-2 truncate"
           :title="file ? file.name : ''"
           aria-live="polite"
         >
@@ -146,43 +151,13 @@ const availableHeaders = (currentKey) => {
         </div>
       </div>
 
-      <!-- Mapping -->
-      <div
+      <!-- CSV Mapping component -->
+      <CsvMapping
         v-if="csvHeaders.length"
-        class="bg-gray-600 p-5 rounded border border-gray-300 max-h-[400px] overflow-auto"
-        role="region"
-        aria-label="CSV column mapping"
-      >
-        <h2 class="font-semibold mb-4 text-white">Map your CSV columns</h2>
-
-        <div
-          v-for="key in BOOKING_FIELDS"
-          :key="key"
-          class="mb-4 flex flex-col sm:flex-row sm:items-center sm:gap-4"
-        >
-          <label
-            :for="key"
-            class="block mb-1 sm:mb-0 sm:w-40 text-sm font-medium text-white whitespace-nowrap"
-          >
-            {{ key }}
-          </label>
-          <select
-            v-model="columnMapping[key]"
-            :id="key"
-            class="flex-grow border border-gray-300 rounded px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-black"
-            aria-required="true"
-          >
-            <option value="">Select CSV column</option>
-            <option
-              v-for="header in availableHeaders(key)"
-              :key="header"
-              :value="header"
-            >
-              {{ header }}
-            </option>
-          </select>
-        </div>
-      </div>
+        :csvHeaders="csvHeaders"
+        v-model="columnMapping"
+        :bookingFields="BOOKING_FIELDS"
+      />
 
       <!-- Submit button -->
       <button

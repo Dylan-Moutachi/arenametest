@@ -1,11 +1,12 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref } from 'vue'
+import EventSearchBar from './EventSearchBar.vue'
 
 const bookings = ref([])
 const loading = ref(true)
 const error = ref(null)
 
-const searchShow = ref('')
+const lastSearchedEvent = ref('')
 
 const stats = ref({
   average_age: null,
@@ -22,13 +23,14 @@ const pagination = ref({
   total_count: 0
 })
 
+// Fetch bookings from API
 const fetchBookings = async () => {
   loading.value = true
   error.value = null
 
   try {
     const params = new URLSearchParams()
-    if (searchShow.value) params.append('show', searchShow.value)
+    if (lastSearchedEvent.value) params.append('event', lastSearchedEvent.value)
     params.append('page', pagination.value.current_page)
     params.append('per_page', pagination.value.per_page)
 
@@ -46,50 +48,41 @@ const fetchBookings = async () => {
   }
 }
 
-onMounted(fetchBookings)
-
-const handleSearch = () => {
+// Triggered by EventSearchBar
+const handleSearch = (query) => {
   pagination.value.current_page = 1
+  lastSearchedEvent.value = query || ''
   fetchBookings()
 }
 
+// Pagination
 const goToPage = (page) => {
   if (page >= 1 && page <= pagination.value.total_pages) {
     pagination.value.current_page = page
     fetchBookings()
   }
 }
+
+// Initial load
+fetchBookings()
 </script>
 
 <template>
-  <div class="max-w-4xl mx-auto p-6">
+  <div class="w-[800px] mx-auto px-6 py-8 min-h-screen flex flex-col">
     <h1 class="text-3xl font-bold mb-6">Statistics</h1>
 
-    <div class="flex items-center mb-6">
-      <input
-        type="text"
-        v-model="searchShow"
-        @keyup.enter="handleSearch"
-        placeholder="Search show"
-        class="border border-gray-300 rounded-l px-3 py-1 focus:outline-none"
-      />
-
-      <button
-        type="button"
-        @click="handleSearch"
-        class="bg-black hover:bg-white hover:text-black  border border-white text-white px-4 py-1 rounded-r transition"
-      >
-        Search
-      </button>
+    <div class="flex justify-between">
+      <EventSearchBar @search="handleSearch" />
 
       <router-link
         to="/import"
-        class="ml-auto text-white bg-black hover:bg-white hover:text-black px-4 py-2 rounded transition"
+        class="text-white bg-black hover:bg-white hover:text-black px-4 py-2 rounded transition mb-4"
       >
         Import CSV
       </router-link>
     </div>
 
+    <!-- Stats cards -->
     <div
       v-if="!loading && !error"
       class="bg-white shadow border border-gray-200 rounded-lg p-4 mb-6 grid grid-cols-1 sm:grid-cols-5 gap-4 text-center"
@@ -116,23 +109,33 @@ const goToPage = (page) => {
       </div>
     </div>
 
-    <div v-if="loading" class="text-gray-500">Loading...</div>
+    <!-- Loader -->
+    <div v-if="loading" class="flex justify-center items-center py-10">
+      <svg class="animate-spin h-8 w-8 text-gray-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+      </svg>
+    </div>
+
+    <!-- Error -->
     <div v-if="error" class="text-red-600 font-semibold">{{ error }}</div>
 
+    <!-- Current search -->
+    <div v-if="!loading && !error" class="mb-2 text-sm text-white">
+      Showing results for: <span class="font-semibold text-white">{{ lastSearchedEvent || 'All events' }}</span>
+    </div>
+
+    <!-- Booking list -->
     <ul v-if="!loading && !error" class="space-y-2">
-      <li
-        v-for="booking in bookings"
-        :key="booking.id"
-        class="border border-gray-200 rounded p-3"
-      >
+      <li v-for="booking in bookings" :key="booking.id" class="border border-gray-200 rounded p-3">
         <span class="font-semibold">{{ booking.first_name }} {{ booking.last_name }}</span> -
         Age: <span>{{ booking.age || "Unknown" }}</span> |
-        Show: <span class="text-blue-500">{{ booking.show }}</span> |
+        Event: <span class="text-blue-500">{{ booking.event }}</span> |
         Price: <span class="text-green-500">{{ booking.price }}€</span>
       </li>
     </ul>
 
-    <!-- Pagination controls -->
+    <!-- Pagination -->
     <div class="flex justify-center gap-2 mt-6" v-if="pagination.total_pages > 1">
       <button
         :disabled="pagination.current_page === 1"
