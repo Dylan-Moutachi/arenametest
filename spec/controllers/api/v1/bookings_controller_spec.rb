@@ -1,8 +1,8 @@
 describe Api::V1::BookingsController, type: :controller do
   describe 'GET #index' do
-    let!(:booking1) { create(:booking, show: 'Show A', age: 20, price: 10.5, email: 'a@example.com') }
-    let!(:booking2) { create(:booking, show: 'Show B', age: 30, price: 20.5, email: 'b@example.com') }
-    let!(:booking3) { create(:booking, show: 'Show A', age: nil, price: 15.0, email: 'a@example.com') }
+    let!(:booking1) { create(:booking, event: 'Event A', age: 20, price: 10.5, email: 'a@example.com') }
+    let!(:booking2) { create(:booking, event: 'Event B', age: 30, price: 20.5, email: 'b@example.com') }
+    let!(:booking3) { create(:booking, event: 'Event A', age: nil, price: 15.0, email: 'a@example.com') }
 
     context 'without filter params' do
       it 'returns all bookings with correct stats and pagination' do
@@ -27,20 +27,20 @@ describe Api::V1::BookingsController, type: :controller do
     end
 
     context 'with show filter' do
-      it 'returns only bookings matching the show filter (case insensitive)' do
-        get :index, params: { show: 'show a' }
+      it 'returns only bookings matching the event filter (case insensitive)' do
+        get :index, params: { event: 'event a' }
 
         json = JSON.parse(response.body)
         expect(json['bookings'].length).to eq(2)
         json['bookings'].each do |booking|
-          expect(booking['show'].downcase).to include('show a')
+          expect(booking['event'].downcase).to include('event a')
         end
       end
     end
 
     context 'with pagination params' do
       before do
-        create_list(:booking, 30, show: 'Show C', age: 25, price: 12.0, email: 'c@example.com')
+        create_list(:booking, 30, event: 'Event C', age: 25, price: 12.0, email: 'c@example.com')
       end
 
       it 'paginates results' do
