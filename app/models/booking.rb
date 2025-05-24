@@ -17,7 +17,7 @@ class Booking < ApplicationRecord
     errors = []
     # Ideally, we can variabilize CSV parsing arguments
     # CSV.foreach(file.path, **options) ...
-    CSV.foreach(file.path, headers: true, col_sep: ";", encoding: "bom|utf-8") do |row|
+    CSV.foreach(file.path, headers: true, col_sep: ";", encoding: "utf-8") do |row|
       begin
         Booking.create!(
           ticket_number: row["Numero billet"],
