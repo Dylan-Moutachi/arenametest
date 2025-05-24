@@ -41,7 +41,7 @@ RSpec.describe "Bookings Import", type: :request do
 
   it "imports bookings from real CSV file" do
     # I use a temporary file to copy sample.csv in order to prevent it to be deleted at the end of the process
-    Tempfile.open(["sample", ".csv"]) do |tempfile|
+    Tempfile.open([ "sample", ".csv" ]) do |tempfile|
       FileUtils.cp(csv_file_path, tempfile.path)
       uploaded_file = Rack::Test::UploadedFile.new(tempfile.path, "text/csv")
 
