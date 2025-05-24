@@ -37,6 +37,6 @@ class Booking < ApplicationRecord
       end
     end
 
-    { successes: successes, errors: errors }
+    { successes:, errors: }
   end
 end

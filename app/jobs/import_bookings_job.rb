@@ -2,7 +2,7 @@ class ImportBookingsJob < ApplicationSidekiqJob
   def perform(file_path, csv_mapping = {})
     begin
       File.open(file_path, "r") do |file|
-        result = Booking.import(file, csv_mapping: csv_mapping)
+        result = Booking.import(file, csv_mapping:)
 
         Rails.logger.info "ImportBookingsJob finished: #{result[:successes]} bookings imported, #{result[:errors].count} errors"
       end
