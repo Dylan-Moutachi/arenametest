@@ -26,7 +26,7 @@ class ImportBookingsJob < ApplicationSidekiqJob
       bookings_import.update!(
         status: "failed",
         successes: 0,
-        error_list: [e.message]
+        error_list: [ e.message ]
       )
     ensure
       File.delete(file_path) if File.exist?(file_path)
