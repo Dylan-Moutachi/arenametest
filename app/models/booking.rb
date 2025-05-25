@@ -1,6 +1,8 @@
 require "csv"
 
 class Booking < ApplicationRecord
+  belongs_to :bookings_import, optional: true
+
   # Some fields like age and gender are not always provided
   validates :ticket_number, :booking_number, :booking_date, :booking_hour,
             :event_key, :event, :show_key, :show, :show_date, :show_hour,
@@ -13,7 +15,7 @@ class Booking < ApplicationRecord
   # Ticket logically seems unique
   validates :ticket_number, uniqueness: true
 
-  def self.import(file, csv_mapping: {})
+  def self.import(file, bookings_import:, csv_mapping: {})
     successes = 0
     errors = []
 
@@ -26,8 +28,10 @@ class Booking < ApplicationRecord
           attributes[model_attr] = row[csv_column_name]
         end
 
-        # Store mapping used for this import in the jsonb column
+        # Store mapping used for the import in the jsonb column
         attributes[:csv_mapping] = csv_mapping
+        # Associate booking to the import event
+        attributes[:bookings_import_id] = bookings_import.id
 
         Booking.create!(attributes)
         successes += 1

@@ -2,6 +2,8 @@ require "tempfile"
 
 RSpec.describe Booking, type: :model do
   describe "import" do
+    let(:bookings_import) { create(:bookings_import) }
+
     let(:valid_csv_content) do
       <<~CSV
         Numero billet;Reservation;Date reservation;Heure reservation;Cle spectacle;Spectacle;Cle representation;Representation;Date representation;Heure representation;Date fin representation;Heure fin representation;Prix;Type de produit;Filiere de vente;Prenom;Nom;Email;Adresse;Code postal;Pays;Age;Sexe
@@ -55,7 +57,7 @@ RSpec.describe Booking, type: :model do
     it "imports valid rows and returns successes and errors" do
       file = create_temp_csv(valid_csv_content)
 
-      result = described_class.import(file, csv_mapping:)
+      result = described_class.import(file, bookings_import:, csv_mapping:)
 
       expect(result[:successes]).to eq(2)
       expect(result[:errors]).to be_empty
@@ -68,7 +70,7 @@ RSpec.describe Booking, type: :model do
     it "skips invalid rows and returns errors" do
       file = create_temp_csv(invalid_csv_content)
 
-      result = described_class.import(file, csv_mapping:)
+      result = described_class.import(file, bookings_import:, csv_mapping:)
 
       expect(result[:successes]).to eq(0)
       expect(result[:errors].length).to eq(1)
