@@ -1,7 +1,8 @@
 <script setup>
-import { ref } from "vue"
+import { ref, onUnmounted } from "vue"
 import Papa from "papaparse"
 import CsvMapping from "./CsvMapping.vue"
+import BookingsImportStatus from "./BookingsImportStatus.vue"
 
 const file = ref(null)
 const MAX_FILE_SIZE_MB = 100
@@ -44,6 +45,49 @@ BOOKING_FIELDS.forEach(field => {
 // Reference to reset file input value for allowing same file import again
 const fileInputRef = ref(null)
 
+// Store the import result here to show success/errors after submission
+const importResult = ref(null)
+
+// Timer reference for polling
+let pollingTimer = null
+const POLLING_INTERVAL_MS = 3000 // 3 seconds interval
+
+// Clear polling timer when component unmounts (avoid memory leaks)
+onUnmounted(() => {
+  if (pollingTimer) {
+    clearTimeout(pollingTimer)
+    pollingTimer = null
+  }
+})
+
+// Polling function to fetch import status
+const pollImportStatus = async (importId) => {
+  try {
+    const resp = await fetch(`http://localhost:3000/api/v1/bookings_imports/${importId}/status`)
+    if (resp.ok) {
+      const data = await resp.json()
+      importResult.value = data
+      if (data.status === "processing") {
+        // Continue polling
+        pollingTimer = setTimeout(() => pollImportStatus(importId), POLLING_INTERVAL_MS)
+      } else {
+        // Import finished, stop polling
+        clearTimeout(pollingTimer)
+        pollingTimer = null
+      }
+    } else {
+      // Error during status fetch, stop polling
+      clearTimeout(pollingTimer)
+      pollingTimer = null
+      alert("Error fetching import status")
+    }
+  } catch (err) {
+    clearTimeout(pollingTimer)
+    pollingTimer = null
+    console.error("Polling error:", err)
+  }
+}
+
 // check the file size here and display message if too big
 const handleFileChange = (event) => {
   const selectedFile = event.target.files[0]
@@ -80,7 +124,7 @@ const handleSubmit = async () => {
   const formData = new FormData()
   formData.append("file", file.value)
 
-  // Add the strigified mapping JSON
+  // Add the stringified mapping JSON
   formData.append("csv_mapping", JSON.stringify(columnMapping.value))
 
   try {
@@ -91,16 +135,29 @@ const handleSubmit = async () => {
 
     // Inform the user that the import is running in the background
     if (response.status === 202) {
+      const json = await response.json()
       alert("Import started. The file is being processed in background.")
+      importResult.value = null
+
+      // Start polling using bookings_import_id
+      pollImportStatus(json.bookings_import_id)
+
+    } else if (response.status === 200) {
+      // Expect JSON with successes and errors
+      const data = await response.json()
+      importResult.value = data
     } else if (response.status === 400) {
       const data = await response.json()
       alert(data.error || "Invalid file.")
+      importResult.value = null
     } else {
       alert("An unexpected error occurred.")
+      importResult.value = null
     }
   } catch (err) {
     console.error("Error caught:", err)
     alert("An unexpected error occurred during import.")
+    importResult.value = null
   } finally {
     // reset everything after submission, so user can re-import same file if needed
     file.value = null
@@ -168,6 +225,9 @@ const handleSubmit = async () => {
         Import
       </button>
     </form>
+
+    <!-- Display import results after submission -->
+    <BookingsImportStatus v-if="importResult" :result="importResult" />
 
     <router-link
       to="/stats"

@@ -10,12 +10,12 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_05_25_140812) do
+ActiveRecord::Schema[8.0].define(version: 2025_05_25_181839) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
   create_table "bookings", force: :cascade do |t|
-    t.integer "booking_number"
+    t.string "booking_number"
     t.string "show"
     t.float "price"
     t.string "last_name"
@@ -24,7 +24,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_05_25_140812) do
     t.string "gender"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.integer "ticket_number"
+    t.string "ticket_number"
     t.string "booking_date"
     t.string "booking_hour"
     t.string "event_key"
@@ -56,5 +56,5 @@ ActiveRecord::Schema[8.0].define(version: 2025_05_25_140812) do
     t.datetime "updated_at", null: false
   end
 
-  add_foreign_key "bookings", "bookings_imports"
+  add_foreign_key "bookings", "bookings_imports", on_delete: :nullify
 end
