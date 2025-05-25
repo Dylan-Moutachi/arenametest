@@ -19,7 +19,17 @@ class Booking < ApplicationRecord
     successes = 0
     errors = []
 
-    CSV.foreach(file.path, headers: true, col_sep: ";", encoding: "utf-8") do |row|
+    # Read file first lines to detect column separator
+    first_lines = file.read(1024)
+    file.rewind
+
+    semicolon_count = first_lines.count(";")
+    comma_count = first_lines.count(",")
+
+    # The one with the highest count is the separator
+    col_sep = semicolon_count > comma_count ? ";" : ","
+
+    CSV.foreach(file.path, col_sep:, encoding: "bom|utf-8", headers: true) do |row|
       begin
         # Dynamically map CSV columns to model attributes
         attributes = {}

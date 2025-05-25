@@ -6,7 +6,11 @@ Rails.application.routes.draw do
   namespace :api do
     namespace :v1 do
       resources :bookings, only: :index do
-        collection { post :import }
+        post :import, on: :collection
+      end
+
+      resources :bookings_imports, only: [] do
+        get :status, on: :member
       end
     end
   end

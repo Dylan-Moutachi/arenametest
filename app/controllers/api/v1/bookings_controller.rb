@@ -71,10 +71,14 @@ module Api
           # parse CSV mapping from frontend
           csv_mapping = params[:csv_mapping].present? ? JSON.parse(params[:csv_mapping]) : {}
 
-          # Enqueue job with file path and mapping
-          ImportBookingsJob.perform_async(tmp_file_path.to_s, csv_mapping)
+          # Create the BookingsImport here with status processing
+          bookings_import = BookingsImport.create!(status: "processing")
 
-          render json: { message: "File upload received. Import is being processed in background." }, status: :accepted
+          # Enqueue job with file path, mapping, and bookings_import id
+          ImportBookingsJob.perform_async(tmp_file_path.to_s, csv_mapping, bookings_import.id)
+
+          # Return the id so front can poll status later
+          render json: { message: "File upload received. Import is being processed in background.", bookings_import_id: bookings_import.id }, status: :accepted
         rescue StandardError => e
           render json: { error: e.message }, status: :unprocessable_entity
         end

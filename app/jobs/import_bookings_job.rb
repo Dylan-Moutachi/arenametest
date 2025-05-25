@@ -1,6 +1,6 @@
 class ImportBookingsJob < ApplicationSidekiqJob
-  def perform(file_path, csv_mapping = {})
-    bookings_import = BookingsImport.create!(status: "processing")
+  def perform(file_path, csv_mapping = {}, bookings_import_id)
+    bookings_import = BookingsImport.find(bookings_import_id)
 
     begin
       File.open(file_path, "r") do |file|
