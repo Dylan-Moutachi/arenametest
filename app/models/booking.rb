@@ -15,11 +15,14 @@ class Booking < ApplicationRecord
   # Ticket logically seems unique
   validates :ticket_number, uniqueness: true
 
+  BATCH_SIZE = 1000
+
   def self.import(file, bookings_import:, csv_mapping: {})
     successes = 0
     errors = []
+    buffer = []
 
-    # Read file first lines to detect column separator
+    # Read first 1024 bytes to detect separator
     first_lines = file.read(1024)
     file.rewind
 
@@ -29,28 +32,50 @@ class Booking < ApplicationRecord
     # The one with the highest count is the separator
     col_sep = semicolon_count > comma_count ? ";" : ","
 
-    CSV.foreach(file.path, col_sep:, encoding: "bom|utf-8", headers: true) do |row|
-      begin
-        # Dynamically map CSV columns to model attributes
-        attributes = {}
+    # Always rewind before CSV.foreach to start reading from beginning
+    file.rewind
 
-        csv_mapping.each do |model_attr, csv_column_name|
-          attributes[model_attr] = row[csv_column_name]
-        end
+    CSV.foreach(file.path, col_sep: col_sep, encoding: "bom|utf-8", headers: true) do |row|
+      # Dynamically map CSV columns to model attributes
+      attributes = {}
 
-        # Store mapping used for the import in the jsonb column
-        attributes[:csv_mapping] = csv_mapping
-        # Associate booking to the import event
-        attributes[:bookings_import_id] = bookings_import.id
+      csv_mapping.each do |model_attr, csv_column_name|
+        attributes[model_attr] = row[csv_column_name]
+      end
 
-        Booking.create!(attributes)
-        successes += 1
-      rescue ActiveRecord::RecordInvalid => e
-        Rails.logger.error "Ignored line: #{row.to_h} – error: #{e.message}"
-        errors << { row: row.to_h, messages: e.record.errors.full_messages }
+      # Store mapping used for the import in the jsonb column
+      attributes[:csv_mapping] = csv_mapping
+      # Associate booking to the import event
+      attributes[:bookings_import_id] = bookings_import.id
+
+      buffer << Booking.new(attributes)
+
+      if buffer.size >= BATCH_SIZE
+        successes += import_batch(buffer, errors)
+        buffer.clear
       end
     end
 
-    { successes:, errors: }
+    # Import any remaining records
+    unless buffer.empty?
+      successes += import_batch(buffer, errors)
+    end
+
+    { successes: successes, errors: errors }
+  end
+
+  # Batch bookings save and return successes and errors
+  private_class_method def self.import_batch(records, errors)
+    successes = 0
+    Booking.transaction do
+      records.each do |record|
+        if record.save
+          successes += 1
+        else
+          errors << { row: record.attributes, messages: record.errors.full_messages }
+        end
+      end
+    end
+    successes
   end
 end
