@@ -12,13 +12,6 @@ RSpec.describe Booking, type: :model do
       CSV
     end
 
-    let(:invalid_csv_content) do
-      <<~CSV
-        Numero billet;Reservation;Date reservation;Heure reservation;Cle spectacle;Spectacle;Cle representation;Representation;Date representation;Heure representation;Date fin representation;Heure fin representation;Prix;Type de produit;Filiere de vente;Prenom;Nom;Email;Adresse;Code postal;Pays;Age;Sexe
-        ;;;;;;;Invalid;;;;;;Missing;;;;;;
-      CSV
-    end
-
     let(:csv_mapping) do
       {
         "ticket_number" => "Numero billet",
@@ -67,17 +60,56 @@ RSpec.describe Booking, type: :model do
       file.unlink
     end
 
-    it "skips invalid rows and returns errors" do
-      file = create_temp_csv(invalid_csv_content)
+    context "with duplicate ticket_number" do
+      let(:duplicate_csv_content) do
+        <<~CSV
+          Numero billet;Reservation;Date reservation;Heure reservation;Cle spectacle;Spectacle;Cle representation;Representation;Date representation;Heure representation;Date fin representation;Heure fin representation;Prix;Type de produit;Filiere de vente;Prenom;Nom;Email;Adresse;Code postal;Pays;Age;Sexe
+          1111111;1003;2023-02-01;12:00;EVT003;Pièce;SHW003;Soirée;2023-02-10;19:00;2023-02-10;21:00;20.0;Billet standard;Online;Claire;Noel;claire@example.com;3 rue Dupont;31000;France;28;F
+          1111111;1004;2023-02-02;13:00;EVT004;Ballet;SHW004;Matinée;2023-02-11;14:00;2023-02-11;16:00;22.0;Billet standard;Online;David;Moreau;david@example.com;4 rue Martin;13000;France;35;M
+        CSV
+      end
 
-      result = described_class.import(file, bookings_import:, csv_mapping:)
+      it "imports the first and skips the duplicate" do
+        file = create_temp_csv(duplicate_csv_content)
+        result = described_class.import(file, bookings_import: bookings_import, csv_mapping: csv_mapping)
 
-      expect(result[:successes]).to eq(0)
-      expect(result[:errors].length).to eq(1)
-      expect(Booking.count).to eq(0)
+        expect(result[:successes]).to eq(1)
+        expect(result[:errors].length).to eq(1)
+        expect(result[:errors].first[:messages]).to include("Ticket number has already been taken")
+        expect(Booking.count).to eq(1)
 
-      file.close
-      file.unlink
+        file.close
+        file.unlink
+      end
+    end
+
+    context "with optional fields missing" do
+      let(:partial_csv_content) do
+        <<~CSV
+          Numero billet;Reservation;Date reservation;Heure reservation;Cle spectacle;Spectacle;Cle representation;Representation;Date representation;Heure representation;Date fin representation;Heure fin representation;Prix;Type de produit;Filiere de vente;Prenom;Nom;Email;Adresse;Code postal;Pays
+          3456789;1005;2023-03-01;14:00;EVT005;Opéra;SHW005;Soirée;2023-03-15;20:00;2023-03-15;22:00;40.0;Billet premium;Online;Emma;Bernard;emma@example.com;5 rue Silence;67000;France
+        CSV
+      end
+
+      let(:partial_mapping) do
+        csv_mapping.except("age", "gender")
+      end
+
+      it "imports successfully even without optional fields" do
+        file = create_temp_csv(partial_csv_content)
+        result = described_class.import(file, bookings_import: bookings_import, csv_mapping: partial_mapping)
+
+        expect(result[:successes]).to eq(1)
+        expect(result[:errors]).to be_empty
+        expect(Booking.count).to eq(1)
+
+        booking = Booking.last
+        expect(booking.age).to be_nil
+        expect(booking.gender).to be_nil
+
+        file.close
+        file.unlink
+      end
     end
   end
 end
