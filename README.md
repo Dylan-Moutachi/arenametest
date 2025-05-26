@@ -27,6 +27,18 @@ This SPA lets you import booking data from a CSV file, map its columns to intern
 Follow these steps to set up the app locally for development and testing.
 
 ### 🛠️ Setup Instructions
+
+💡 **Windows Compatibility**
+
+  This project is primarily developed and tested in a Unix-like environment (macOS/Linux).
+  If you're using Windows:
+
+- Make sure Ruby, PostgreSQL and Node.js are correctly installed.
+- We recommend running Redis (required for Sidekiq) via [Docker](https://www.docker.com/) or [WSL](https://learn.microsoft.com/en-us/windows/wsl/).
+- Consider using Git Bash or WSL to run Unix-style commands like `bundle exec` or `rails db:migrate`.
+
+**For macOS/Linux users:**
+
 1. Clone the repo using **SSH** (requires SSH key configured):
   ```bash
   git clone git@github.com:Dylan-Moutachi/arenametest.git
