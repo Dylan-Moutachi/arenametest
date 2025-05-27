@@ -9,7 +9,7 @@ const MAX_FILE_SIZE_MB = 100
 
 const csvHeaders = ref([])
 
-// useful to order columns during mapping
+// used for columns order during mapping
 const BOOKING_FIELDS = [
   "ticket_number",
   "booking_number",
@@ -159,7 +159,7 @@ const handleSubmit = async () => {
     alert("An unexpected error occurred during import.")
     importResult.value = null
   } finally {
-    // reset everything after submission, so user can re-import same file if needed
+    // reset everything after submission
     file.value = null
     csvHeaders.value = []
     // reset column mapping
@@ -168,7 +168,7 @@ const handleSubmit = async () => {
       columnMapping.value[field] = ""
     })
 
-    // Reset file input to allow selecting the same file again
+    // Reset file input
     if (fileInputRef.value) {
       fileInputRef.value.value = ""
     }

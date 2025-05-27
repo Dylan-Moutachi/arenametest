@@ -172,6 +172,7 @@ Frontend polls the status endpoint every 3 seconds using setInterval to detect c
 | `CsvMapping.vue`         | Column mapping UI                     |
 | `Stats.vue` | Booking stats component   |
 | `EventSearchBar.vue` | Event search bar component to search bookings by event |
+| `BookingsImportStatus.vue` | Display import status by polling |
 
 ## 🧠 Performance and Robustness Considerations
 
@@ -204,7 +205,7 @@ Frontend polls the status endpoint every 3 seconds using setInterval to detect c
 
       I made a Booking parent model BookingsImport, which records each import.
 
-      The import is done line per line, allowing partial imports if some lines are not valid (e.g. a duplicate ticket number). Every line failed leads to an error displayed for the user.
+      The file is processed line by line, enabling partial imports in case some rows are invalid (e.g., due to a duplicate ticket number). Each failed line results in a specific error message displayed to the user. To optimize performance and reduce database load, valid bookings are grouped and saved in batches.
 
 
   2. Testing CI

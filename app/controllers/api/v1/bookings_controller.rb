@@ -7,7 +7,7 @@ module Api
 
       # In order to prevent swapping on sidekiq, I set a maximum file size
       # With 100MB as max file size and 2 sidekiq threads, the server will take at most 200MB RAM
-      # If I deploy with my Heroku account with 512GB max memory, I leave 300MB for the system
+      # If I deploy with my Heroku account with 512MB max memory, I leave 300MB for the system
       MAX_FILE_SIZE_MB = 100 # Allows about 100,000 lines. Around the Stade de France stadium capacity
 
       def index
