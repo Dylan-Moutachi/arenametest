@@ -63,7 +63,7 @@ onUnmounted(() => {
 // Polling function to fetch import status
 const pollImportStatus = async (importId) => {
   try {
-    const resp = await fetch(`http://localhost:3000/api/v1/bookings_imports/${importId}/status`)
+    const resp = await fetch(`http://localhost:3000/api/v1/bookings_imports/${importId}`)
     if (resp.ok) {
       const data = await resp.json()
       importResult.value = data

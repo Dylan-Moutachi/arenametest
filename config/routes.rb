@@ -9,9 +9,7 @@ Rails.application.routes.draw do
         post :import, on: :collection
       end
 
-      resources :bookings_imports, only: [] do
-        get :status, on: :member
-      end
+      resources :bookings_imports, only: :show
     end
   end
 end
