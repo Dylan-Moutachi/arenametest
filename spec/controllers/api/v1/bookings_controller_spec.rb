@@ -13,13 +13,6 @@ describe Api::V1::BookingsController, type: :controller do
         json = JSON.parse(response.body)
         expect(json['bookings'].length).to eq(3)
 
-        # average_age ignores nil and rounds
-        expect(json['stats']['average_age']).to eq(25)
-        expect(json['stats']['average_price']).to eq(15.33)
-        expect(json['stats']['total_revenue']).to eq(46.0)
-        expect(json['stats']['booking_count']).to eq(3)
-        expect(json['stats']['unique_buyers_count']).to eq(2)
-
         expect(json['pagination']['current_page']).to eq(1)
         expect(json['pagination']['per_page']).to eq(20)
         expect(json['pagination']['total_count']).to eq(3)

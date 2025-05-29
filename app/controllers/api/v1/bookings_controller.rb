@@ -24,22 +24,9 @@ module Api
 
         paginated_bookings = bookings.page(page_number).per(per_page)
 
-        # stats not depending on pagination
-        average_age = bookings.where.not(age: nil).average(:age)&.round || nil
-        average_price = bookings.average(:price)&.round(2)
-        total_revenue = bookings.sum(:price).round(2)
-        booking_count = bookings.count
-        unique_buyers_count = bookings.select(:email).distinct.count
-
         render json: {
           bookings: ActiveModelSerializers::SerializableResource.new(paginated_bookings, each_serializer: BookingSerializer),
-          stats: {
-            average_age: average_age,
-            average_price: average_price,
-            total_revenue: total_revenue,
-            booking_count: booking_count,
-            unique_buyers_count: unique_buyers_count
-          },
+          stats: Booking.global_stats(bookings),
           pagination: {
             current_page: paginated_bookings.current_page,
             total_pages: paginated_bookings.total_pages,
