@@ -64,6 +64,17 @@ class Booking < ApplicationRecord
     { successes: successes, errors: errors }
   end
 
+  # Booking stats
+  def self.global_stats(scope = all)
+    {
+      average_age: scope.where.not(age: nil).average(:age)&.round,
+      average_price: scope.average(:price)&.round(2),
+      total_revenue: scope.sum(:price).round(2),
+      booking_count: scope.count,
+      unique_buyers_count: scope.select(:email).distinct.count
+    }
+  end
+
   # Batch bookings save and return successes and errors
   private_class_method def self.import_batch(records, errors)
     successes = 0

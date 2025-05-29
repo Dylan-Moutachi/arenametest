@@ -112,4 +112,22 @@ RSpec.describe Booking, type: :model do
       end
     end
   end
+
+  describe "global_stats" do
+    before do
+      create(:booking, age: 30, price: 50.0, email: "user1@example.com")
+      create(:booking, age: 40, price: 70.0, email: "user2@example.com")
+      create(:booking, age: nil, price: 80.0, email: "user2@example.com")
+    end
+
+    it "calculates correct statistics" do
+      stats = Booking.global_stats
+
+      expect(stats[:average_age]).to eq(35)
+      expect(stats[:average_price]).to eq(66.67)
+      expect(stats[:total_revenue]).to eq(200.0)
+      expect(stats[:booking_count]).to eq(3)
+      expect(stats[:unique_buyers_count]).to eq(2)
+    end
+  end
 end
