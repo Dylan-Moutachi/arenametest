@@ -40,6 +40,13 @@ module Api
         file = params[:file]
         return render json: { error: "No file sent" }, status: :bad_request unless file
 
+        # Ensure file sent is a CSV MIME type (avoid potential code injections)
+        allowed_mime_types = [ "text/csv", "application/csv", "text/plain" ]
+        real_mime_type = Marcel::MimeType.for(file.path, name: file.original_filename)
+        unless allowed_mime_types.include?(real_mime_type)
+          return render json: { error: "File content type unauthorized (detected: #{real_mime_type})." }, status: :bad_request
+        end
+
         # Size limit
         if file.size > MAX_FILE_SIZE_MB.megabytes
           return render json: { error: "File is too large. Maximum allowed size is #{MAX_FILE_SIZE_MB} MB." }, status: :bad_request

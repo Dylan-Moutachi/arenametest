@@ -58,3 +58,4 @@ gem "redis"
 
 gem "csv", "~> 3.3"
 gem "charlock_holmes"
+gem "marcel"
