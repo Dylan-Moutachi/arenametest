@@ -3,6 +3,8 @@
 
 This SPA lets you import booking data from a CSV file, map its columns to internal system fields, and track the import’s progress and results via a background job. You can also view the imported bookings, search by event and access booking statistics.
 
+*Note to examiners: In an effort to improve robustness and security, I am still actively working on this project. If you wish to review the version as it was on Monday, May 26th, you can clone the repository at commit 9de596c.*
+
 ## 🛠️ Tech Stack
 
 ### ⛁ Backend:
